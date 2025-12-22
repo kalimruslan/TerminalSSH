@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Settings Screen -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_back">Back</string>
+    <string name="settings_font_size">Font Size</string>
+    <string name="settings_size_format">Size: %1$dsp</string>
+    <string name="settings_preview">Preview</string>
+    <string name="settings_color_scheme">Color Scheme</string>
+    <string name="settings_selected">Selected</string>
+
+    <!-- Color Scheme Names -->
+    <string name="color_scheme_dark">Dark</string>
+    <string name="color_scheme_light">Light</string>
+    <string name="color_scheme_solarized_dark">Solarized Dark</string>
+    <string name="color_scheme_monokai">Monokai</string>
+</resources>

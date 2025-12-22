@@ -1,6 +1,7 @@
 package com.ruslan.terminalssh.data.repository
 
 import com.ruslan.terminalssh.core.common.result.Result
+import com.ruslan.terminalssh.data.ssh.DemoSshClient
 import com.ruslan.terminalssh.data.ssh.SshClient
 import com.ruslan.terminalssh.domain.model.ConnectionConfig
 import com.ruslan.terminalssh.domain.model.ConnectionState
@@ -10,23 +11,37 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.merge
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class SshRepositoryImpl @Inject constructor(
-    private val sshClient: SshClient
+    private val sshClient: SshClient,
+    private val demoSshClient: DemoSshClient
 ) : SshRepository {
 
     private val _connectionState = MutableStateFlow<ConnectionState>(ConnectionState.Disconnected)
     override val connectionState: StateFlow<ConnectionState> = _connectionState.asStateFlow()
 
-    override val terminalOutput: Flow<TerminalOutput> = sshClient.output
+    override val terminalOutput: Flow<TerminalOutput> = merge(
+        sshClient.output,
+        demoSshClient.output
+    )
+
+    private var isDemoMode = false
 
     override suspend fun connect(config: ConnectionConfig): Result<Unit> {
         _connectionState.value = ConnectionState.Connecting
+        isDemoMode = config.isDemoMode
 
-        return when (val result = sshClient.connect(config)) {
+        val result = if (isDemoMode) {
+            demoSshClient.connect(config)
+        } else {
+            sshClient.connect(config)
+        }
+
+        return when (result) {
             is Result.Success -> {
                 _connectionState.value = ConnectionState.Connected
                 Result.Success(Unit)
@@ -40,11 +55,20 @@ class SshRepositoryImpl @Inject constructor(
     }
 
     override suspend fun disconnect() {
-        sshClient.disconnect()
+        if (isDemoMode) {
+            demoSshClient.disconnect()
+        } else {
+            sshClient.disconnect()
+        }
+        isDemoMode = false
         _connectionState.value = ConnectionState.Disconnected
     }
 
     override suspend fun executeCommand(command: String): Result<Unit> {
-        return sshClient.executeCommand(command)
+        return if (isDemoMode) {
+            demoSshClient.executeCommand(command)
+        } else {
+            sshClient.executeCommand(command)
+        }
     }
 }

@@ -11,8 +11,11 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import com.ruslan.terminalssh.core.theme.TerminalSSHTheme
-import com.ruslan.terminalssh.feature.terminal.navigation.TERMINAL_GRAPH_ROUTE
-import com.ruslan.terminalssh.feature.terminal.navigation.terminalNavGraph
+import com.ruslan.terminalssh.feature.connect.navigation.CONNECT_ROUTE
+import com.ruslan.terminalssh.feature.connect.navigation.connectScreen
+import com.ruslan.terminalssh.feature.settings.navigation.SETTINGS_ROUTE
+import com.ruslan.terminalssh.feature.settings.navigation.settingsScreen
+import com.ruslan.terminalssh.feature.terminal.navigation.terminalScreen
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -30,9 +33,30 @@ class MainActivity : ComponentActivity() {
 
                     NavHost(
                         navController = navController,
-                        startDestination = TERMINAL_GRAPH_ROUTE
+                        startDestination = CONNECT_ROUTE
                     ) {
-                        terminalNavGraph(navController)
+                        connectScreen(
+                            onNavigateToTerminal = { connectionId ->
+                                navController.navigate("terminal/$connectionId") {
+                                    popUpTo(CONNECT_ROUTE) { inclusive = true }
+                                }
+                            }
+                        )
+                        terminalScreen(
+                            onNavigateBack = {
+                                navController.navigate(CONNECT_ROUTE) {
+                                    popUpTo("terminal/{connectionId}") { inclusive = true }
+                                }
+                            },
+                            onNavigateToSettings = {
+                                navController.navigate(SETTINGS_ROUTE)
+                            }
+                        )
+                        settingsScreen(
+                            onNavigateBack = {
+                                navController.popBackStack()
+                            }
+                        )
                     }
                 }
             }

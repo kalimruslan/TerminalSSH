@@ -7,10 +7,14 @@ import com.ruslan.terminalssh.domain.model.ConnectionState
 import com.ruslan.terminalssh.domain.model.FavoriteCommand
 import com.ruslan.terminalssh.domain.repository.SshRepository
 import com.ruslan.terminalssh.domain.usecase.AddToFavoritesUseCase
+import com.ruslan.terminalssh.domain.usecase.AddToHistoryUseCase
 import com.ruslan.terminalssh.domain.usecase.DisconnectSshUseCase
 import com.ruslan.terminalssh.domain.usecase.ExecuteCommandUseCase
 import com.ruslan.terminalssh.domain.usecase.GetFavoriteCommandsUseCase
+import com.ruslan.terminalssh.domain.usecase.GetHistoryCommandUseCase
+import com.ruslan.terminalssh.domain.usecase.GetHistorySizeUseCase
 import com.ruslan.terminalssh.domain.usecase.RemoveFromFavoritesUseCase
+import com.ruslan.terminalssh.domain.repository.SettingsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,7 +34,11 @@ class TerminalViewModel @Inject constructor(
     private val disconnectSshUseCase: DisconnectSshUseCase,
     private val getFavoriteCommandsUseCase: GetFavoriteCommandsUseCase,
     private val addToFavoritesUseCase: AddToFavoritesUseCase,
-    private val removeFromFavoritesUseCase: RemoveFromFavoritesUseCase
+    private val removeFromFavoritesUseCase: RemoveFromFavoritesUseCase,
+    private val addToHistoryUseCase: AddToHistoryUseCase,
+    private val getHistoryCommandUseCase: GetHistoryCommandUseCase,
+    private val getHistorySizeUseCase: GetHistorySizeUseCase,
+    private val settingsRepository: SettingsRepository
 ) : ViewModel() {
 
     private val connectionId: Long = savedStateHandle.get<Long>("connectionId") ?: 0L
@@ -47,6 +55,7 @@ class TerminalViewModel @Inject constructor(
     init {
         observeTerminalOutput()
         observeConnectionState()
+        observeSettings()
         if (connectionId > 0) {
             observeFavoriteCommands()
         }
@@ -135,6 +144,19 @@ class TerminalViewModel @Inject constructor(
         }
     }
 
+    private fun observeSettings() {
+        viewModelScope.launch {
+            settingsRepository.settings.collect { settings ->
+                _state.update {
+                    it.copy(
+                        fontSize = settings.fontSize,
+                        colorScheme = settings.colorScheme
+                    )
+                }
+            }
+        }
+    }
+
     fun handleIntent(intent: TerminalIntent) {
         when (intent) {
             is TerminalIntent.UpdateCommand -> updateCommand(intent.command)
@@ -143,15 +165,22 @@ class TerminalViewModel @Inject constructor(
             is TerminalIntent.ToggleFavoritesDropdown -> toggleFavoritesDropdown()
             is TerminalIntent.SelectFavoriteCommand -> selectFavoriteCommand(intent.command)
             is TerminalIntent.ToggleCurrentCommandFavorite -> toggleCurrentCommandFavorite()
+            is TerminalIntent.HistoryUp -> navigateHistoryUp()
+            is TerminalIntent.HistoryDown -> navigateHistoryDown()
         }
     }
 
     private fun updateCommand(command: String) {
         _state.update { currentState ->
             val isFavorite = currentState.favoriteCommands.any { it.command == command.trim() }
+            // Only reset history navigation if user manually edited the command
+            val shouldResetHistory = currentState.historyIndex >= 0 &&
+                command != currentState.currentCommand
             currentState.copy(
                 currentCommand = command,
-                isCurrentCommandFavorite = isFavorite
+                isCurrentCommandFavorite = isFavorite,
+                historyIndex = if (shouldResetHistory) -1 else currentState.historyIndex,
+                savedCurrentCommand = if (shouldResetHistory) "" else currentState.savedCurrentCommand
             )
         }
     }
@@ -161,8 +190,21 @@ class TerminalViewModel @Inject constructor(
         if (command.isEmpty()) return
 
         viewModelScope.launch {
-            _state.update { it.copy(currentCommand = "", showFavoritesDropdown = false) }
+            _state.update {
+                it.copy(
+                    currentCommand = "",
+                    showFavoritesDropdown = false,
+                    historyIndex = -1,
+                    savedCurrentCommand = ""
+                )
+            }
             executeCommandUseCase(command)
+
+            if (connectionId > 0) {
+                addToHistoryUseCase(connectionId, command)
+                val newSize = getHistorySizeUseCase(connectionId)
+                _state.update { it.copy(historySize = newSize) }
+            }
         }
     }
 
@@ -196,6 +238,78 @@ class TerminalViewModel @Inject constructor(
                 removeFromFavoritesUseCase(connectionId, currentCommand)
             } else {
                 addToFavoritesUseCase(connectionId, currentCommand)
+            }
+        }
+    }
+
+    private fun navigateHistoryUp() {
+        if (connectionId <= 0) return
+
+        viewModelScope.launch {
+            val currentState = _state.value
+            val historySize = getHistorySizeUseCase(connectionId)
+
+            if (historySize == 0) return@launch
+
+            val newIndex = if (currentState.historyIndex < 0) {
+                // First time pressing up - save current command and go to first history item
+                _state.update { it.copy(savedCurrentCommand = it.currentCommand) }
+                0
+            } else if (currentState.historyIndex < historySize - 1) {
+                currentState.historyIndex + 1
+            } else {
+                return@launch // Already at oldest command
+            }
+
+            val historyCommand = getHistoryCommandUseCase(connectionId, newIndex)
+            if (historyCommand != null) {
+                _state.update {
+                    it.copy(
+                        currentCommand = historyCommand.command,
+                        historyIndex = newIndex,
+                        historySize = historySize,
+                        isCurrentCommandFavorite = it.favoriteCommands.any { fav ->
+                            fav.command == historyCommand.command
+                        }
+                    )
+                }
+            }
+        }
+    }
+
+    private fun navigateHistoryDown() {
+        if (connectionId <= 0) return
+
+        viewModelScope.launch {
+            val currentState = _state.value
+            if (currentState.historyIndex < 0) return@launch // Not in history navigation mode
+
+            val newIndex = currentState.historyIndex - 1
+
+            if (newIndex < 0) {
+                // Return to saved current command
+                _state.update {
+                    it.copy(
+                        currentCommand = it.savedCurrentCommand,
+                        historyIndex = -1,
+                        isCurrentCommandFavorite = it.favoriteCommands.any { fav ->
+                            fav.command == it.savedCurrentCommand.trim()
+                        }
+                    )
+                }
+            } else {
+                val historyCommand = getHistoryCommandUseCase(connectionId, newIndex)
+                if (historyCommand != null) {
+                    _state.update {
+                        it.copy(
+                            currentCommand = historyCommand.command,
+                            historyIndex = newIndex,
+                            isCurrentCommandFavorite = it.favoriteCommands.any { fav ->
+                                fav.command == historyCommand.command
+                            }
+                        )
+                    }
+                }
             }
         }
     }

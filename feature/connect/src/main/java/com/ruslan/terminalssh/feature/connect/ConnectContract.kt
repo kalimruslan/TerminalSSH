@@ -1,4 +1,4 @@
-package com.ruslan.terminalssh.feature.terminal.connect
+package com.ruslan.terminalssh.feature.connect
 
 import com.ruslan.terminalssh.domain.model.SavedConnection
 
@@ -22,6 +22,7 @@ sealed class ConnectIntent {
     data class UpdatePassword(val password: String) : ConnectIntent()
     data class UpdateConnectionName(val name: String) : ConnectIntent()
     data object Connect : ConnectIntent()
+    data object ConnectDemo : ConnectIntent()
     data object DismissError : ConnectIntent()
     data class SelectConnection(val connection: SavedConnection) : ConnectIntent()
     data class DeleteConnection(val connection: SavedConnection) : ConnectIntent()

@@ -1,5 +1,6 @@
 package com.ruslan.terminalssh.feature.terminal.terminal
 
+import com.ruslan.terminalssh.domain.model.ColorScheme
 import com.ruslan.terminalssh.domain.model.FavoriteCommand
 import com.ruslan.terminalssh.domain.model.TerminalOutput
 
@@ -10,7 +11,12 @@ data class TerminalState(
     val connectionId: Long = 0,
     val favoriteCommands: List<FavoriteCommand> = emptyList(),
     val showFavoritesDropdown: Boolean = false,
-    val isCurrentCommandFavorite: Boolean = false
+    val isCurrentCommandFavorite: Boolean = false,
+    val historyIndex: Int = -1,
+    val historySize: Int = 0,
+    val savedCurrentCommand: String = "",
+    val fontSize: Int = 14,
+    val colorScheme: ColorScheme = ColorScheme.DARK
 )
 
 sealed class TerminalIntent {
@@ -20,6 +26,8 @@ sealed class TerminalIntent {
     data object ToggleFavoritesDropdown : TerminalIntent()
     data class SelectFavoriteCommand(val command: FavoriteCommand) : TerminalIntent()
     data object ToggleCurrentCommandFavorite : TerminalIntent()
+    data object HistoryUp : TerminalIntent()
+    data object HistoryDown : TerminalIntent()
 }
 
 sealed class TerminalEffect {

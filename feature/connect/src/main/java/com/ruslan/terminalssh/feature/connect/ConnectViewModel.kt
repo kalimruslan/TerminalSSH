@@ -1,4 +1,4 @@
-package com.ruslan.terminalssh.feature.terminal.connect
+package com.ruslan.terminalssh.feature.connect
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -55,6 +55,7 @@ class ConnectViewModel @Inject constructor(
             is ConnectIntent.UpdatePassword -> _state.update { it.copy(password = intent.password) }
             is ConnectIntent.UpdateConnectionName -> _state.update { it.copy(connectionName = intent.name) }
             is ConnectIntent.Connect -> connect()
+            is ConnectIntent.ConnectDemo -> connectDemo()
             is ConnectIntent.DismissError -> _state.update { it.copy(error = null) }
             is ConnectIntent.SelectConnection -> selectConnection(intent.connection)
             is ConnectIntent.DeleteConnection -> deleteConnection(intent.connection)
@@ -131,6 +132,35 @@ class ConnectViewModel @Inject constructor(
                 is Result.Error -> {
                     _state.update {
                         it.copy(isLoading = false, error = result.exception.message ?: "Connection failed")
+                    }
+                }
+                is Result.Loading -> {
+                    // Already loading
+                }
+            }
+        }
+    }
+
+    private fun connectDemo() {
+        viewModelScope.launch {
+            _state.update { it.copy(isLoading = true, error = null) }
+
+            val demoConfig = ConnectionConfig(
+                host = "demo.local",
+                port = 22,
+                username = "demo",
+                password = "demo",
+                isDemoMode = true
+            )
+
+            when (val result = connectSshUseCase(demoConfig)) {
+                is Result.Success -> {
+                    _state.update { it.copy(isLoading = false) }
+                    _effect.send(ConnectEffect.NavigateToTerminal(-1L))
+                }
+                is Result.Error -> {
+                    _state.update {
+                        it.copy(isLoading = false, error = result.exception.message ?: "Demo connection failed")
                     }
                 }
                 is Result.Loading -> {

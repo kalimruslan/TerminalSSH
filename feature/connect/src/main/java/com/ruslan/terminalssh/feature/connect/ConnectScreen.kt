@@ -1,4 +1,4 @@
-package com.ruslan.terminalssh.feature.terminal.connect
+package com.ruslan.terminalssh.feature.connect
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
@@ -18,7 +18,10 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
@@ -42,6 +45,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -95,7 +100,7 @@ private fun ConnectContent(
     ) {
         item {
             Text(
-                text = "SSH Connection",
+                text = stringResource(R.string.connect_title),
                 style = MaterialTheme.typography.headlineMedium,
                 color = MaterialTheme.colorScheme.primary
             )
@@ -146,7 +151,7 @@ private fun SavedConnectionsList(
             modifier = Modifier.padding(16.dp)
         ) {
             Text(
-                text = "Saved Connections",
+                text = stringResource(R.string.connect_saved_connections),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -178,7 +183,7 @@ private fun SavedConnectionsList(
                 )
                 Spacer(modifier = Modifier.width(12.dp))
                 Text(
-                    text = "Add new connection",
+                    text = stringResource(R.string.connect_add_new),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.primary
                 )
@@ -232,7 +237,7 @@ private fun SavedConnectionItem(
         IconButton(onClick = onDelete) {
             Icon(
                 Icons.Default.Delete,
-                contentDescription = "Delete",
+                contentDescription = stringResource(R.string.connect_delete),
                 tint = MaterialTheme.colorScheme.error
             )
         }
@@ -247,8 +252,8 @@ private fun ConnectionForm(
     OutlinedTextField(
         value = state.host,
         onValueChange = { onIntent(ConnectIntent.UpdateHost(it)) },
-        label = { Text("Host") },
-        placeholder = { Text("192.168.1.1") },
+        label = { Text(stringResource(R.string.connect_host)) },
+        placeholder = { Text(stringResource(R.string.connect_host_placeholder)) },
         modifier = Modifier.fillMaxWidth(),
         singleLine = true,
         enabled = !state.isLoading
@@ -259,8 +264,8 @@ private fun ConnectionForm(
     OutlinedTextField(
         value = state.port,
         onValueChange = { onIntent(ConnectIntent.UpdatePort(it)) },
-        label = { Text("Port") },
-        placeholder = { Text("22") },
+        label = { Text(stringResource(R.string.connect_port)) },
+        placeholder = { Text(stringResource(R.string.connect_port_placeholder)) },
         modifier = Modifier.fillMaxWidth(),
         singleLine = true,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -272,8 +277,8 @@ private fun ConnectionForm(
     OutlinedTextField(
         value = state.username,
         onValueChange = { onIntent(ConnectIntent.UpdateUsername(it)) },
-        label = { Text("Username") },
-        placeholder = { Text("admin") },
+        label = { Text(stringResource(R.string.connect_username)) },
+        placeholder = { Text(stringResource(R.string.connect_username_placeholder)) },
         modifier = Modifier.fillMaxWidth(),
         singleLine = true,
         enabled = !state.isLoading
@@ -284,7 +289,7 @@ private fun ConnectionForm(
     OutlinedTextField(
         value = state.password,
         onValueChange = { onIntent(ConnectIntent.UpdatePassword(it)) },
-        label = { Text("Password") },
+        label = { Text(stringResource(R.string.connect_password)) },
         modifier = Modifier.fillMaxWidth(),
         singleLine = true,
         visualTransformation = PasswordVisualTransformation(),
@@ -309,7 +314,7 @@ private fun ConnectionForm(
                     enabled = !state.isLoading
                 )
                 Text(
-                    text = "Save connection",
+                    text = stringResource(R.string.connect_save_connection),
                     style = MaterialTheme.typography.bodyMedium
                 )
             }
@@ -320,8 +325,8 @@ private fun ConnectionForm(
                     OutlinedTextField(
                         value = state.connectionName,
                         onValueChange = { onIntent(ConnectIntent.UpdateConnectionName(it)) },
-                        label = { Text("Connection name (optional)") },
-                        placeholder = { Text("My Server") },
+                        label = { Text(stringResource(R.string.connect_connection_name)) },
+                        placeholder = { Text(stringResource(R.string.connect_connection_name_placeholder)) },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
                         enabled = !state.isLoading
@@ -347,7 +352,45 @@ private fun ConnectionForm(
                 strokeWidth = 2.dp
             )
         } else {
-            Text("Connect")
+            Text(stringResource(R.string.connect_button))
         }
     }
+
+    Spacer(modifier = Modifier.height(12.dp))
+
+    OutlinedButton(
+        onClick = { onIntent(ConnectIntent.ConnectDemo) },
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(56.dp),
+        enabled = !state.isLoading,
+        colors = ButtonDefaults.outlinedButtonColors(
+            contentColor = MaterialTheme.colorScheme.secondary
+        )
+    ) {
+        if (state.isLoading) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(24.dp),
+                strokeWidth = 2.dp
+            )
+        } else {
+            Icon(
+                Icons.Default.PlayArrow,
+                contentDescription = null,
+                modifier = Modifier.size(20.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(stringResource(R.string.connect_demo_mode))
+        }
+    }
+
+    Spacer(modifier = Modifier.height(8.dp))
+
+    Text(
+        text = stringResource(R.string.connect_demo_description),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        textAlign = TextAlign.Center,
+        modifier = Modifier.fillMaxWidth()
+    )
 }

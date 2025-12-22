@@ -2,6 +2,7 @@ package com.ruslan.terminalssh.data.repository
 
 import com.ruslan.terminalssh.data.database.dao.ConnectionDao
 import com.ruslan.terminalssh.data.database.entity.ConnectionEntity
+import com.ruslan.terminalssh.data.security.PasswordEncryptor
 import com.ruslan.terminalssh.domain.model.SavedConnection
 import com.ruslan.terminalssh.domain.repository.ConnectionRepository
 import kotlinx.coroutines.flow.Flow
@@ -11,7 +12,8 @@ import javax.inject.Singleton
 
 @Singleton
 class ConnectionRepositoryImpl @Inject constructor(
-    private val connectionDao: ConnectionDao
+    private val connectionDao: ConnectionDao,
+    private val passwordEncryptor: PasswordEncryptor
 ) : ConnectionRepository {
 
     override fun getAllConnections(): Flow<List<SavedConnection>> {
@@ -48,7 +50,7 @@ class ConnectionRepositoryImpl @Inject constructor(
         host = host,
         port = port,
         username = username,
-        password = password,
+        password = decryptPassword(password),
         lastUsedAt = lastUsedAt
     )
 
@@ -58,8 +60,22 @@ class ConnectionRepositoryImpl @Inject constructor(
         host = host,
         port = port,
         username = username,
-        password = password,
+        password = passwordEncryptor.encrypt(password),
         createdAt = System.currentTimeMillis(),
         lastUsedAt = lastUsedAt
     )
+
+    private fun decryptPassword(encryptedPassword: String): String {
+        return try {
+            if (passwordEncryptor.isEncrypted(encryptedPassword)) {
+                passwordEncryptor.decrypt(encryptedPassword)
+            } else {
+                // Legacy unencrypted password - return as is
+                encryptedPassword
+            }
+        } catch (e: Exception) {
+            // If decryption fails, return empty string for security
+            ""
+        }
+    }
 }

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Connect Screen -->
+    <string name="connect_title">SSH Connection</string>
+    <string name="connect_saved_connections">Saved Connections</string>
+    <string name="connect_add_new">Add new connection</string>
+    <string name="connect_delete">Delete</string>
+    <string name="connect_host">Host</string>
+    <string name="connect_host_placeholder">192.168.1.1</string>
+    <string name="connect_port">Port</string>
+    <string name="connect_port_placeholder">22</string>
+    <string name="connect_username">Username</string>
+    <string name="connect_username_placeholder">admin</string>
+    <string name="connect_password">Password</string>
+    <string name="connect_save_connection">Save connection</string>
+    <string name="connect_connection_name">Connection name (optional)</string>
+    <string name="connect_connection_name_placeholder">My Server</string>
+    <string name="connect_button">Connect</string>
+    <string name="connect_demo_mode">Demo Mode</string>
+    <string name="connect_demo_description">Try the app without a real SSH server</string>
+</resources>

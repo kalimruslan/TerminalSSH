@@ -14,7 +14,7 @@ android {
         applicationId = "com.ruslan.terminalssh"
         minSdk = 24
         targetSdk = 36
-        versionCode = 1
+        versionCode = 2
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -60,6 +60,8 @@ dependencies {
     implementation(project(":domain"))
     implementation(project(":data"))
     implementation(project(":feature:terminal"))
+    implementation(project(":feature:connect"))
+    implementation(project(":feature:settings"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)

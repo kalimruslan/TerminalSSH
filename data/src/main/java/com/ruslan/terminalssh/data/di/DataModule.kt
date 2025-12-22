@@ -1,10 +1,14 @@
 package com.ruslan.terminalssh.data.di
 
+import com.ruslan.terminalssh.data.repository.CommandHistoryRepositoryImpl
 import com.ruslan.terminalssh.data.repository.ConnectionRepositoryImpl
 import com.ruslan.terminalssh.data.repository.FavoriteCommandRepositoryImpl
+import com.ruslan.terminalssh.data.repository.SettingsRepositoryImpl
 import com.ruslan.terminalssh.data.repository.SshRepositoryImpl
+import com.ruslan.terminalssh.domain.repository.CommandHistoryRepository
 import com.ruslan.terminalssh.domain.repository.ConnectionRepository
 import com.ruslan.terminalssh.domain.repository.FavoriteCommandRepository
+import com.ruslan.terminalssh.domain.repository.SettingsRepository
 import com.ruslan.terminalssh.domain.repository.SshRepository
 import dagger.Binds
 import dagger.Module
@@ -27,4 +31,12 @@ abstract class DataModule {
     @Binds
     @Singleton
     abstract fun bindFavoriteCommandRepository(impl: FavoriteCommandRepositoryImpl): FavoriteCommandRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindCommandHistoryRepository(impl: CommandHistoryRepositoryImpl): CommandHistoryRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindSettingsRepository(impl: SettingsRepositoryImpl): SettingsRepository
 }
