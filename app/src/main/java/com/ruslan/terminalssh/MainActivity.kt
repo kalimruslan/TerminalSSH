@@ -15,6 +15,8 @@ import com.ruslan.terminalssh.feature.connect.navigation.CONNECT_ROUTE
 import com.ruslan.terminalssh.feature.connect.navigation.connectScreen
 import com.ruslan.terminalssh.feature.settings.navigation.SETTINGS_ROUTE
 import com.ruslan.terminalssh.feature.settings.navigation.settingsScreen
+import com.ruslan.terminalssh.feature.sftp.navigation.SFTP_ROUTE
+import com.ruslan.terminalssh.feature.sftp.navigation.sftpScreen
 import com.ruslan.terminalssh.feature.terminal.navigation.terminalScreen
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -50,9 +52,17 @@ class MainActivity : ComponentActivity() {
                             },
                             onNavigateToSettings = {
                                 navController.navigate(SETTINGS_ROUTE)
+                            },
+                            onNavigateToSftp = {
+                                navController.navigate(SFTP_ROUTE)
                             }
                         )
                         settingsScreen(
+                            onNavigateBack = {
+                                navController.popBackStack()
+                            }
+                        )
+                        sftpScreen(
                             onNavigateBack = {
                                 navController.popBackStack()
                             }

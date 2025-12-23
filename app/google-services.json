@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "69352462626",
+    "project_id": "terminalssh-6637f",
+    "storage_bucket": "terminalssh-6637f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:69352462626:android:a4bdedf4493b437aeead7b",
+        "android_client_info": {
+          "package_name": "com.ruslan.terminalssh"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBeSKlx6tm3YN9ljhdw5zmd5dX0fPzhk_E"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

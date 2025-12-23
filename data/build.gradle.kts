@@ -41,6 +41,7 @@ dependencies {
 
     // Apache MINA SSHD
     implementation(libs.mina.sshd.core)
+    implementation(libs.mina.sshd.sftp)
 
     // Coroutines
     implementation(libs.kotlinx.coroutines.core)

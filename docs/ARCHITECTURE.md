@@ -38,11 +38,11 @@
 │  └──────────────────────────────────────────────────────────────┘  │
 │  ┌──────────────────────────────────────────────────────────────┐  │
 │  │                  Repository Interfaces                        │  │
-│  │       SshRepository • ConnectionRepository • FavoriteRepo     │  │
+│  │  SshRepository • ConnectionRepository • SftpRepository • etc  │  │
 │  └──────────────────────────────────────────────────────────────┘  │
 │  ┌──────────────────────────────────────────────────────────────┐  │
 │  │                       Domain Models                           │  │
-│  │  ConnectionConfig • ConnectionState • TerminalOutput • etc    │  │
+│  │  ConnectionConfig • TerminalOutput • FileEntry • Settings     │  │
 │  └──────────────────────────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────────────────┘
                               │
@@ -50,8 +50,8 @@
 ┌─────────────────────────────────────────────────────────────────────┐
 │                         DATA LAYER                                  │
 │  ┌────────────────┐  ┌────────────────┐  ┌────────────────────┐    │
-│  │  Repository    │  │   SSH Client   │  │    Room Database   │    │
-│  │  Implementations│  │  (Apache MINA) │  │    (Connections)   │    │
+│  │  Repository    │  │ SSH/SFTP Client│  │    Room Database   │    │
+│  │  Implementations│  │  (Apache MINA) │  │    + DataStore     │    │
 │  └────────────────┘  └────────────────┘  └────────────────────┘    │
 └─────────────────────────────────────────────────────────────────────┘
 ```
@@ -71,7 +71,7 @@
 TerminalSSH/
 ├── app/                          # Главный модуль приложения
 │   └── src/main/java/.../
-│       ├── MainActivity.kt       # Единственная Activity
+│       ├── MainActivity.kt       # Единственная Activity + NavHost
 │       └── TerminalSshApplication.kt
 │
 ├── core/                         # Общие модули
@@ -87,12 +87,21 @@ TerminalSSH/
 │           ├── Color.kt
 │           ├── Theme.kt
 │           ├── Type.kt
-│           └── TerminalColors.kt
+│           └── TerminalColors.kt  # Цветовые схемы терминала
 │
 ├── domain/                       # Бизнес-логика (чистый Kotlin)
 │   └── src/main/java/.../
 │       ├── model/                # Domain модели
+│       │   ├── ConnectionConfig.kt
+│       │   ├── TerminalOutput.kt
+│       │   ├── FileEntry.kt      # Модель файла для SFTP
+│       │   ├── TerminalSettings.kt
+│       │   └── ...
 │       ├── repository/           # Интерфейсы репозиториев
+│       │   ├── SshRepository.kt
+│       │   ├── SftpRepository.kt
+│       │   ├── SettingsRepository.kt
+│       │   └── ...
 │       └── usecase/              # Use Cases
 │
 ├── data/                         # Реализация данных
@@ -100,41 +109,72 @@ TerminalSSH/
 │       ├── database/             # Room (Entity, DAO, Database)
 │       ├── di/                   # Hilt модули
 │       ├── repository/           # Реализации репозиториев
-│       └── ssh/                  # SSH клиент
+│       ├── security/             # PasswordEncryptor (Android Keystore)
+│       ├── ssh/                  # SSH клиент (SshClient, DemoSshClient)
+│       └── sftp/                 # SFTP клиент (SftpClient, DemoSftpClient)
 │
 └── feature/                      # Feature модули
-    └── terminal/                 # Модуль терминала
+    ├── connect/                  # Модуль подключения
+    │   └── src/main/java/.../
+    │       ├── ConnectContract.kt
+    │       ├── ConnectViewModel.kt
+    │       ├── ConnectScreen.kt
+    │       └── navigation/
+    │
+    ├── terminal/                 # Модуль терминала
+    │   └── src/main/java/.../
+    │       ├── terminal/         # Экран терминала
+    │       └── navigation/
+    │
+    ├── settings/                 # Модуль настроек
+    │   └── src/main/java/.../
+    │       ├── SettingsContract.kt
+    │       ├── SettingsViewModel.kt
+    │       ├── SettingsScreen.kt
+    │       └── navigation/
+    │
+    └── sftp/                     # Модуль файлового браузера
         └── src/main/java/.../
-            ├── connect/          # Экран подключения
-            ├── terminal/         # Экран терминала
-            └── navigation/       # Навигация
+            ├── SftpContract.kt
+            ├── SftpViewModel.kt
+            ├── SftpScreen.kt
+            ├── components/       # FileItem, PathBreadcrumb
+            └── navigation/
 ```
 
 ### Зависимости между модулями
 
 ```
-         ┌─────────────────────────────┐
-         │            app              │
-         └──────────────┬──────────────┘
-                        │
-         ┌──────────────┼──────────────┐
-         │              │              │
-         ▼              ▼              ▼
-┌─────────────┐  ┌───────────┐  ┌───────────┐
-│feature:terminal│  │   data    │  │core:theme │
-└───────┬─────┘  └─────┬─────┘  └───────────┘
-        │              │
-        │              │
-        ▼              ▼
-    ┌───────────────────────┐
-    │        domain         │
-    └───────────┬───────────┘
-                │
-                ▼
-         ┌────────────┐
-         │core:common │
-         └────────────┘
+                    ┌─────────────────────────────┐
+                    │            app              │
+                    └──────────────┬──────────────┘
+                                   │
+    ┌──────────┬──────────┬────────┼────────┬──────────┬──────────┐
+    │          │          │        │        │          │          │
+    ▼          ▼          ▼        ▼        ▼          ▼          ▼
+┌────────┐ ┌────────┐ ┌────────┐ ┌────┐ ┌────────┐ ┌────────┐ ┌────────┐
+│feature:│ │feature:│ │feature:│ │data│ │feature:│ │core:   │ │core:   │
+│connect │ │terminal│ │settings│ │    │ │sftp    │ │theme   │ │common  │
+└───┬────┘ └───┬────┘ └───┬────┘ └─┬──┘ └───┬────┘ └────────┘ └────────┘
+    │          │          │        │        │
+    └──────────┴──────────┴────────┼────────┘
+                                   │
+                    ┌──────────────┴──────────────┐
+                    │           domain            │
+                    └──────────────┬──────────────┘
+                                   │
+                    ┌──────────────┴──────────────┐
+                    │         core:common         │
+                    └─────────────────────────────┘
 ```
+
+**Feature модули изолированы друг от друга:**
+- `feature:connect` — экран подключения
+- `feature:terminal` — SSH терминал
+- `feature:settings` — настройки приложения
+- `feature:sftp` — файловый браузер SFTP
+
+Навигация между модулями осуществляется через callback-функции в `app` модуле.
 
 ---
 
@@ -279,17 +319,34 @@ class AddToFavoritesUseCase @Inject constructor(
 ```
 
 **Полный список Use Cases:**
+
+*SSH/Terminal:*
 - `ConnectSshUseCase` — подключение к SSH
 - `DisconnectSshUseCase` — отключение
 - `ExecuteCommandUseCase` — выполнение команды
+
+*Connections:*
 - `GetSavedConnectionsUseCase` — список сохранённых подключений
 - `SaveConnectionUseCase` — сохранение подключения
 - `DeleteConnectionUseCase` — удаление подключения
 - `GetConnectionByIdUseCase` — получение подключения по ID
 - `UpdateConnectionLastUsedUseCase` — обновление времени последнего использования
+
+*Favorites:*
 - `GetFavoriteCommandsUseCase` — получение избранных команд
 - `AddToFavoritesUseCase` — добавление в избранное
 - `RemoveFromFavoritesUseCase` — удаление из избранного
+
+*Command History:*
+- `AddToHistoryUseCase` — добавление команды в историю
+- `GetHistoryCommandUseCase` — получение команды из истории
+- `GetHistorySizeUseCase` — получение размера истории
+
+*SFTP:*
+- `OpenSftpChannelUseCase` — открытие SFTP канала
+- `CloseSftpChannelUseCase` — закрытие SFTP канала
+- `ListDirectoryUseCase` — получение списка файлов
+- `GetCurrentDirectoryUseCase` — получение текущей директории
 
 ---
 
@@ -960,10 +1017,13 @@ fun NavGraphBuilder.terminalGraph(navController: NavHostController) {
 |------------|--------|------------|
 | **Jetpack Compose** | BOM 2024.09.00 | UI Framework |
 | **Material 3** | (via Compose BOM) | Design System |
+| **Material Icons Extended** | (via Compose BOM) | Расширенный набор иконок |
 | **Hilt** | 2.51.1 | Dependency Injection |
 | **Room** | 2.6.1 | Локальная база данных |
+| **DataStore Preferences** | 1.1.1 | Key-value хранилище настроек |
 | **Navigation Compose** | 2.8.4 | Навигация |
-| **Apache MINA SSHD** | 2.14.0 | SSH клиент |
+| **Apache MINA SSHD Core** | 2.14.0 | SSH клиент |
+| **Apache MINA SSHD SFTP** | 2.14.0 | SFTP клиент |
 | **Kotlin Coroutines** | 1.9.0 | Асинхронность |
 | **Lifecycle** | 2.10.0 | Lifecycle-aware компоненты |
 

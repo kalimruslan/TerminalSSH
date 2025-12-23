@@ -171,4 +171,6 @@ class SshClient @Inject constructor(
     }
 
     fun isConnected(): Boolean = session?.isOpen == true && channel?.isOpen == true
+
+    fun getSession(): ClientSession? = session
 }

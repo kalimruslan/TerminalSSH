@@ -26,6 +26,7 @@ import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.Star
@@ -85,6 +86,7 @@ private fun ColorScheme.toTerminalColors(): TerminalColorScheme = when (this) {
 fun TerminalScreen(
     onNavigateBack: () -> Unit,
     onNavigateToSettings: () -> Unit,
+    onNavigateToSftp: () -> Unit,
     viewModel: TerminalViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
@@ -138,6 +140,13 @@ fun TerminalScreen(
                     containerColor = colors.background
                 ),
                 actions = {
+                    IconButton(onClick = onNavigateToSftp) {
+                        Icon(
+                            Icons.Default.Folder,
+                            contentDescription = stringResource(R.string.terminal_files),
+                            tint = colors.text
+                        )
+                    }
                     IconButton(onClick = onNavigateToSettings) {
                         Icon(
                             Icons.Default.Settings,

@@ -7,7 +7,7 @@ plugins {
 }
 
 android {
-    namespace = "com.ruslan.terminalssh.feature.terminal"
+    namespace = "com.ruslan.terminalssh.feature.sftp"
     compileSdk = 36
 
     defaultConfig {

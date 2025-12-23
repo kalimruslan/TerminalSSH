@@ -17,7 +17,8 @@ fun NavController.navigateToTerminal(connectionId: Long) {
 
 fun NavGraphBuilder.terminalScreen(
     onNavigateBack: () -> Unit,
-    onNavigateToSettings: () -> Unit
+    onNavigateToSettings: () -> Unit,
+    onNavigateToSftp: () -> Unit
 ) {
     composable(
         route = TERMINAL_ROUTE,
@@ -27,7 +28,8 @@ fun NavGraphBuilder.terminalScreen(
     ) {
         TerminalScreen(
             onNavigateBack = onNavigateBack,
-            onNavigateToSettings = onNavigateToSettings
+            onNavigateToSettings = onNavigateToSettings,
+            onNavigateToSftp = onNavigateToSftp
         )
     }
 }

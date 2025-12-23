@@ -2,6 +2,7 @@
 <resources>
     <!-- Terminal Screen -->
     <string name="terminal_title">Terminal</string>
+    <string name="terminal_files">Files</string>
     <string name="terminal_settings">Settings</string>
     <string name="terminal_disconnect">Disconnect</string>
     <string name="terminal_favorites">Favorites (%1$d)</string>

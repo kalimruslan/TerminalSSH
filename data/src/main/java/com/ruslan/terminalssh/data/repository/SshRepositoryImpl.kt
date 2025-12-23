@@ -18,7 +18,8 @@ import javax.inject.Singleton
 @Singleton
 class SshRepositoryImpl @Inject constructor(
     private val sshClient: SshClient,
-    private val demoSshClient: DemoSshClient
+    private val demoSshClient: DemoSshClient,
+    private val sftpRepositoryImpl: SftpRepositoryImpl
 ) : SshRepository {
 
     private val _connectionState = MutableStateFlow<ConnectionState>(ConnectionState.Disconnected)
@@ -34,6 +35,7 @@ class SshRepositoryImpl @Inject constructor(
     override suspend fun connect(config: ConnectionConfig): Result<Unit> {
         _connectionState.value = ConnectionState.Connecting
         isDemoMode = config.isDemoMode
+        sftpRepositoryImpl.setDemoMode(isDemoMode)
 
         val result = if (isDemoMode) {
             demoSshClient.connect(config)

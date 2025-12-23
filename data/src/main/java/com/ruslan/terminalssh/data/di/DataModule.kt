@@ -4,11 +4,13 @@ import com.ruslan.terminalssh.data.repository.CommandHistoryRepositoryImpl
 import com.ruslan.terminalssh.data.repository.ConnectionRepositoryImpl
 import com.ruslan.terminalssh.data.repository.FavoriteCommandRepositoryImpl
 import com.ruslan.terminalssh.data.repository.SettingsRepositoryImpl
+import com.ruslan.terminalssh.data.repository.SftpRepositoryImpl
 import com.ruslan.terminalssh.data.repository.SshRepositoryImpl
 import com.ruslan.terminalssh.domain.repository.CommandHistoryRepository
 import com.ruslan.terminalssh.domain.repository.ConnectionRepository
 import com.ruslan.terminalssh.domain.repository.FavoriteCommandRepository
 import com.ruslan.terminalssh.domain.repository.SettingsRepository
+import com.ruslan.terminalssh.domain.repository.SftpRepository
 import com.ruslan.terminalssh.domain.repository.SshRepository
 import dagger.Binds
 import dagger.Module
@@ -39,4 +41,8 @@ abstract class DataModule {
     @Binds
     @Singleton
     abstract fun bindSettingsRepository(impl: SettingsRepositoryImpl): SettingsRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindSftpRepository(impl: SftpRepositoryImpl): SftpRepository
 }
